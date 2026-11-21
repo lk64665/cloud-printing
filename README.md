@@ -1,10 +1,10 @@
 # Cloud Printing
 
-Choose and format a photo on your phone, preview the printed page, then submit the PDF to your laptop. Existing PDFs open a page-by-page preview and can be submitted as-is. The laptop saves every PDF before attempting to print.
+Choose a supported image on your phone to preview and adjust its printed layout, then submit the PDF to your laptop. Existing PDFs open a page-by-page preview and can be submitted as-is. The laptop saves every PDF before attempting to print.
 
 ## Use the website
 
-Open the [hosted website](https://cloud-printing-nine.vercel.app/) on the laptop, keep the tab open, and scan the QR in **Share Printer** with your phone. Choose and format your photo, tap **Preview**, then tap **Submit**. The laptop browser starts a PDF download using its download settings. **Download again** is available if automatic downloads are blocked. Use **Open PDF to print** and the PDF viewer’s Print button for a connected printer.
+Open the [hosted website](https://cloud-printing-nine.vercel.app/) on the laptop, keep the tab open, and scan the QR in **Share Printer** with your phone. Choose an image or PDF. Its preview opens automatically. Adjust the image layout if needed, then tap **Submit**. The laptop browser starts a PDF download using its download settings. **Download again** is available if automatic downloads are blocked. Use **Open PDF to print** and the PDF viewer’s Print button for a connected printer.
 
 ## Optional Windows receiver for unattended printing
 
@@ -25,7 +25,7 @@ Open the address shown in the terminal (by default, http://127.0.0.1:4321) **on 
 
 If you use a different deployment, set `$env:PRINT_SENDER_URL = 'https://your-sender-site.example/'` before starting the receiver. Use the same version of the app on both devices. For unattended printing, use the local receiver URL on the laptop.
 
-Choose a photo, set its paper size, orientation, margins and fit, and tap **Preview**. Tap **Submit** to send the prepared PDF. The phone displays the laptop's confirmation. Files go to **Downloads / Cloud Printing** by default. The receiver accepts PDFs up to 25 MB.
+Choose a photo to see its page preview. Set its paper size, orientation, margins and fit to update the preview. Tap **Submit** to send the prepared PDF. The phone displays the laptop's confirmation. Files go to **Downloads / Cloud Printing** by default. The receiver accepts PDFs up to 25 MB.
 
 ### Optional physical printer
 

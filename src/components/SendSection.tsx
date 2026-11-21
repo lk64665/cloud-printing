@@ -18,53 +18,57 @@ export default function SendSection({ isConnected, isSending, sendProgress, file
   const [selected, setSelected] = useState<File | null>(null)
   const [selection, setSelection] = useState(0)
   const [settings, setSettings] = useState(defaultSettings)
-  const [prepared, setPrepared] = useState<{ file: File; url: string } | null>(null)
+  const [prepared, setPrepared] = useState<{ file: File; url: string; source: File; settings: PhotoSettings } | null>(null)
   const [preparing, setPreparing] = useState(false)
   const [error, setError] = useState('')
   const isPdf = selected !== null && (/\.pdf$/i.test(selected.name) || selected.type === 'application/pdf')
   const isPhoto = selected !== null && !isPdf
   const isOversizedPdf = isPdf && selected.size > 25 * 1024 * 1024
-  const previewUrl = prepared?.url
+  const currentPreview = prepared?.source === selected && prepared.settings === settings ? prepared : null
 
   useEffect(() => {
-    if (previewUrl) return () => URL.revokeObjectURL(previewUrl)
-  }, [previewUrl])
-
-  function updateSettings(changes: Partial<PhotoSettings>) {
-    setSettings({ ...settings, ...changes })
-    setPrepared(null)
-    setError('')
-  }
-
-  async function showPreview() {
-    if (!selected) return
+    if (!selected || !isPhoto) return
+    let cancelled = false
+    let url: string | undefined
     setPreparing(true)
     setError('')
-    try {
-      const result = await formatPhoto(selected, settings)
-      setPrepared({ file: result.file, url: URL.createObjectURL(result.preview) })
-    } catch {
-      setError('Could not preview this photo. Try a JPEG or PNG image.')
-    } finally {
-      setPreparing(false)
+
+    void formatPhoto(selected, settings).then(result => {
+      if (cancelled) return
+      url = URL.createObjectURL(result.preview)
+      setPrepared({ file: result.file, url, source: selected, settings })
+    }).catch(() => {
+      if (!cancelled) setError('Could not preview this image. Try a JPEG, PNG, or WebP file.')
+    }).finally(() => {
+      if (!cancelled) setPreparing(false)
+    })
+
+    return () => {
+      cancelled = true
+      if (url) URL.revokeObjectURL(url)
     }
+  }, [selected, settings, isPhoto])
+
+  function updateSettings(changes: Partial<PhotoSettings>) {
+    setSettings(value => ({ ...value, ...changes }))
+    setPrepared(null)
   }
 
   function submit() {
-    if (isPhoto && prepared) onSendFile(prepared.file, settings.paper)
+    if (isPhoto && currentPreview) onSendFile(currentPreview.file, settings.paper)
     if (isPdf && !isOversizedPdf) onSendFile(selected)
   }
 
   return (
     <div class="send-section">
       <h2 class="step-label">2. Prepare and send</h2>
-      <button disabled={!isConnected || isSending || preparing} onClick={() => fileInputRef.current?.click()}>
+      <button disabled={!isConnected || isSending} onClick={() => fileInputRef.current?.click()}>
         {selected ? 'Choose another file' : 'Choose file'}
       </button>
       <input
         ref={fileInputRef}
         type="file"
-        accept=".pdf,image/*"
+        accept=".pdf,.jpg,.jpeg,.jepg,.png,.webp,.gif,.bmp,.avif,image/*,application/pdf"
         hidden
         onChange={(event) => {
           const file = event.currentTarget.files?.[0]
@@ -73,6 +77,7 @@ export default function SendSection({ isConnected, isSending, sendProgress, file
             setSelection(value => value + 1)
             setPrepared(null)
             setError('')
+            setPreparing(false)
           }
           event.currentTarget.value = ''
         }}
@@ -82,7 +87,7 @@ export default function SendSection({ isConnected, isSending, sendProgress, file
       {isPdf && !isOversizedPdf && <PdfPreview key={selection} file={selected} />}
       {isOversizedPdf && <p role="alert">Choose a PDF no larger than 25 MB.</p>}
       {isPhoto && (
-        <fieldset class="photo-settings" disabled={preparing || isSending}>
+        <fieldset class="photo-settings" disabled={isSending}>
           <legend>Page settings</legend>
           <label>Paper size
             <select value={settings.paper} onChange={event => updateSettings({ paper: event.currentTarget.value as PaperSize })}>
@@ -108,15 +113,11 @@ export default function SendSection({ isConnected, isSending, sendProgress, file
           </label>
         </fieldset>
       )}
-      {isPhoto && !prepared && (
-        <button disabled={preparing || isSending} onClick={showPreview}>
-          {preparing ? 'Preparing preview…' : 'Preview'}
-        </button>
-      )}
-      {prepared && <img class="photo-preview" src={prepared.url} alt="Preview of the formatted print page" />}
+      {isPhoto && preparing && <p role="status">Preparing image preview…</p>}
+      {currentPreview && <img class="photo-preview" src={currentPreview.url} alt="Preview of the formatted print page" />}
 
       {selected && !isSending && (
-        <button disabled={!isConnected || isOversizedPdf || (isPhoto && !prepared)} onClick={submit}>Submit</button>
+        <button disabled={!isConnected || isOversizedPdf || (isPhoto && !currentPreview)} onClick={submit}>Submit</button>
       )}
       {isSending && (
         <div id="send-progress">
