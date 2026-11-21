@@ -4,6 +4,7 @@ import preact from '@astrojs/preact'
 
 export default defineConfig({
   site: 'https://printer.party',
+  base: process.env.PAGES_BASE_PATH || '/',
   integrations: [preact()],
   vite: {
     resolve: {

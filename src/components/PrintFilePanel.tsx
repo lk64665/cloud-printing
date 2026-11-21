@@ -8,11 +8,12 @@ export default function PrintFilePanel() {
   const isConnected = useSelector(actor, (s) => s.hasTag('peer-connected'))
   const isSending = useSelector(actor, (s) => s.hasTag('sending'))
   const sendProgress = useSelector(actor, (s) => s.context.sendProgress)
+  const sendStatus = useSelector(actor, (s) => s.context.sendStatus)
   const fileName = useSelector(actor, (s) => s.context.fileToSend?.name ?? '')
   const activeTab = useSelector(actor, (s) => s.context.activeTab)
   const peerCount = useSelector(actor, (s) => s.context.peers.size)
 
-  const peerText = peerCount === 1 ? '1 printer connected' : `${peerCount} printers connected`
+  const peerText = peerCount === 1 ? 'Laptop connected' : `${peerCount} receivers connected`
 
   return (
     <div id="tab-print" class={`tab-panel${activeTab === 'print' ? ' active' : ''}`}>
@@ -26,7 +27,7 @@ export default function PrintFilePanel() {
           <div class="connect-status">
             <span class="connect-status-dot">{peerText}</span>
             <button class="muted-btn" onClick={() => actor.send({ type: 'DISCONNECT' })}>
-              Connect to different printer
+              Connect to another laptop
             </button>
           </div>
         )}
@@ -36,7 +37,8 @@ export default function PrintFilePanel() {
           isSending={isSending}
           sendProgress={sendProgress}
           fileName={fileName}
-          onSendFile={(file) => actor.send({ type: 'SEND_FILE', file })}
+          sendStatus={sendStatus}
+          onSendFile={(file, paper) => actor.send({ type: 'SEND_FILE', file, paper })}
           onCancelSend={() => actor.send({ type: 'SEND_CANCEL' })}
         />
       </section>

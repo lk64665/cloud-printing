@@ -6,7 +6,8 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "receiver": "node server/print-receiver.mjs"
   },
   "repository": {
     "type": "git",
@@ -27,6 +28,7 @@
     "@yudiel/react-qr-scanner": "^2.5.1",
     "astro": "^5.17.2",
     "html5-qrcode": "^2.3.8",
+    "pdf-lib": "^1.17.1",
     "preact": "^10.28.4",
     "qr-code-styling": "^1.9.2",
     "react-qr-code": "^2.0.18",

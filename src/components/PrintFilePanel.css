@@ -133,3 +133,52 @@
 .cancel-btn:hover {
   background: var(--cancel-hover);
 }
+
+.selected-file,
+.send-status,
+.send-section [role='alert'] {
+  margin: 0.75rem 0;
+  overflow-wrap: anywhere;
+}
+
+.photo-settings {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  min-width: 0;
+  margin: 0.75rem 0;
+  padding: 0.75rem;
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+}
+
+.photo-settings legend {
+  padding: 0 0.25rem;
+  font-size: 0.875rem;
+}
+
+.photo-settings select {
+  display: block;
+  width: 100%;
+  min-height: 2.5rem;
+  margin-top: 0.25rem;
+  padding: 0.4rem;
+  font: inherit;
+  color: var(--text-primary);
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 6px;
+}
+
+.photo-preview {
+  display: block;
+  max-width: 100%;
+  max-height: 65vh;
+  margin: 1rem auto;
+  border: 1px solid var(--card-border);
+  object-fit: contain;
+}
+
+.send-section button + button {
+  margin-top: 0.75rem;
+}

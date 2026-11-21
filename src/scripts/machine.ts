@@ -1,9 +1,13 @@
-import { setup, assign, fromCallback, enqueueActions, raise } from 'xstate'
+import { setup, assign, fromCallback, enqueueActions } from 'xstate'
+
+import type { PaperSize } from './formatPhoto'
 
 export interface FileMetadata {
   name: string
   type: string
   size: number
+  jobId: string
+  paper?: PaperSize
 }
 
 export interface AppContext {
@@ -12,6 +16,8 @@ export interface AppContext {
   peers: Set<string>
   fileToSend: File | null
   sendProgress: number
+  paper?: PaperSize
+  sendStatus: string
   activeTab: 'room' | 'print'
 }
 
@@ -23,20 +29,20 @@ export type AppEvent =
   | { type: 'QR_DETECTED'; roomId: string }
   // From fileTransferActor
   | { type: 'SEND_PROGRESS'; percent: number }
-  | { type: 'SEND_DONE' }
+  | { type: 'SEND_DONE'; message: string }
   // User interactions — join flow
   | { type: 'START_SCAN' }
   | { type: 'START_CODE_ENTRY' }
   | { type: 'CANCEL_JOIN' }
   | { type: 'JOIN_ROOM'; roomId: string }
   | { type: 'DISCONNECT' }
-  | { type: 'SEND_FILE'; file: File }
+  | { type: 'SEND_FILE'; file: File; paper?: PaperSize }
   | { type: 'SEND_CANCEL' }
   | { type: 'SWITCH_TAB'; tab: 'room' | 'print' }
 
 // Actor input types — used by actor.ts when providing implementations
-export interface RoomActorInput { roomId: string }
-export interface FileTransferActorInput { file: File }
+export interface RoomActorInput { roomId: string; receiving: boolean }
+export interface FileTransferActorInput { file: File; peerId: string; paper?: PaperSize }
 
 export const printerPartyMachine = setup({
   types: {
@@ -76,8 +82,13 @@ export const printerPartyMachine = setup({
     }),
     setFileToSend: assign({
       fileToSend: ({ event }) => (event.type === 'SEND_FILE' ? event.file : null),
+      paper: ({ event }) => event.type === 'SEND_FILE' ? event.paper : undefined,
+      sendStatus: '',
     }),
-    clearFileToSend: assign({ fileToSend: null }),
+    clearFileToSend: assign({ fileToSend: null, paper: undefined }),
+    setSendStatus: assign({
+      sendStatus: ({ event }) => event.type === 'SEND_DONE' ? event.message : '',
+    }),
     updateProgress: assign({
       sendProgress: ({ event }) => (event.type === 'SEND_PROGRESS' ? event.percent : 0),
     }),
@@ -102,6 +113,7 @@ export const printerPartyMachine = setup({
     peers: new Set<string>(),
     fileToSend: null,
     sendProgress: 0,
+    sendStatus: '',
     activeTab: 'print' as const,
   }),
   on: {
@@ -111,27 +123,27 @@ export const printerPartyMachine = setup({
   },
   initial: 'printer',
   states: {
-    // This device owns the room and auto-prints received files.
+    // This device owns the receiving room.
     printer: {
       type: 'parallel',
       invoke: {
         id: 'printerRoom',
         src: 'printerRoomActor',
-        input: ({ context }): RoomActorInput => ({ roomId: context.printerRoomId }),
+        input: ({ context }): RoomActorInput => ({ roomId: context.printerRoomId, receiving: true }),
       },
       on: {
         DISCONNECT: {
           target: 'printer',
           reenter: true,
-          actions: 'clearPeers',
+          actions: ['clearPeers', 'clearFileToSend', 'setSendStatus'],
         },
         JOIN_ROOM: {
           target: 'printing',
-          actions: ['setPrintingRoomId', 'clearPeers'],
+          actions: ['setPrintingRoomId', 'clearPeers', 'clearFileToSend', 'setSendStatus'],
         },
         QR_DETECTED: {
           target: 'printing',
-          actions: ['setPrintingRoomId', 'clearPeers'],
+          actions: ['setPrintingRoomId', 'clearPeers', 'clearFileToSend', 'setSendStatus'],
         },
       },
       states: {
@@ -183,22 +195,22 @@ export const printerPartyMachine = setup({
       invoke: {
         id: 'printingRoom',
         src: 'printingRoomActor',
-        input: ({ context }): RoomActorInput => ({ roomId: context.printingRoomId }),
+        input: ({ context }): RoomActorInput => ({ roomId: context.printingRoomId, receiving: false }),
       },
       on: {
         DISCONNECT: {
           target: 'printer',
-          actions: 'clearPeers',
+          actions: ['clearPeers', 'clearFileToSend', 'setSendStatus'],
         },
         JOIN_ROOM: {
           target: 'printing',
           reenter: true,
-          actions: ['setPrintingRoomId', 'clearPeers'],
+          actions: ['setPrintingRoomId', 'clearPeers', 'clearFileToSend', 'setSendStatus'],
         },
         QR_DETECTED: {
           target: 'printing',
           reenter: true,
-          actions: ['setPrintingRoomId', 'clearPeers'],
+          actions: ['setPrintingRoomId', 'clearPeers', 'clearFileToSend', 'setSendStatus'],
         },
       },
       initial: 'connecting',
@@ -235,7 +247,7 @@ export const printerPartyMachine = setup({
         // Printer peer is connected; ready to send files.
         connected: {
           tags: ['peer-connected'],
-          always: [{ guard: 'noPeers', target: 'connecting' }],
+          always: [{ guard: 'noPeers', target: 'connecting', actions: ['clearFileToSend', 'setSendStatus'] }],
           initial: 'idle',
           states: {
             idle: {
@@ -252,13 +264,17 @@ export const printerPartyMachine = setup({
               invoke: {
                 id: 'fileTransfer',
                 src: 'fileTransferActor',
-                input: ({ context }): FileTransferActorInput => ({ file: context.fileToSend! }),
+                input: ({ context }): FileTransferActorInput => ({
+                  file: context.fileToSend!,
+                  peerId: [...context.peers][0],
+                  paper: context.paper,
+                }),
               },
               on: {
                 SEND_PROGRESS: { actions: 'updateProgress' },
                 SEND_DONE: {
                   target: 'idle',
-                  actions: 'clearFileToSend',
+                  actions: ['clearFileToSend', 'setSendStatus'],
                 },
                 SEND_CANCEL: {
                   target: 'idle',
