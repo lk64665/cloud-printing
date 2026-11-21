@@ -8,6 +8,13 @@ export default function PdfPreview({ file }: { file: File }) {
   const [page, setPage] = useState(1)
   const [status, setStatus] = useState('Loading PDF preview…')
   const [error, setError] = useState('')
+  const [fallbackUrl, setFallbackUrl] = useState('')
+
+  useEffect(() => {
+    const url = URL.createObjectURL(new Blob([file], { type: 'application/pdf' }))
+    setFallbackUrl(url)
+    return () => URL.revokeObjectURL(url)
+  }, [file])
 
   useEffect(() => {
     let cancelled = false
@@ -95,6 +102,7 @@ export default function PdfPreview({ file }: { file: File }) {
       )}
       {status && <p role="status">{status}</p>}
       {error && <p role="alert">{error}</p>}
+      {fallbackUrl && <a href={fallbackUrl} target="_blank" rel="noopener">Open PDF preview in a new tab</a>}
       <div ref={pageContainer} />
     </div>
   )
