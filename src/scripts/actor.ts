@@ -46,7 +46,7 @@ function printReceivedFile(data: ArrayBuffer, metadata: FileMetadata) {
 // ── Actor implementations ─────────────────────────────────────────────────────
 
 const roomActorImpl = fromCallback<AppEvent, RoomActorInput>(({ input, sendBack }) => {
-  const room = joinRoom({ appId: 'printer-party' }, input.roomId)
+  const room = joinRoom({ appId: 'printer-party', relayRedundancy: 10 }, input.roomId)
 
   room.onPeerJoin((peerId) => sendBack({ type: 'PEER_JOINED', peerId }))
   room.onPeerLeave((peerId) => sendBack({ type: 'PEER_LEFT', peerId }))
@@ -71,7 +71,7 @@ const fileTransferActorImpl = fromCallback<AppEvent, FileTransferActorInput>(
 
     if (!fn) {
       sendBack({ type: 'SEND_DONE' })
-      return () => {}
+      return () => { }
     }
 
     input.file
