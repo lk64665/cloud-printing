@@ -29,6 +29,7 @@
     "astro": "^5.17.2",
     "html5-qrcode": "^2.3.8",
     "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^5.7.284",
     "preact": "^10.28.4",
     "qr-code-styling": "^1.9.2",
     "react-qr-code": "^2.0.18",

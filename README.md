@@ -1,6 +1,6 @@
 # Cloud Printing
 
-Choose and format a photo on your phone, preview the printed page, then submit the PDF to your laptop. Existing PDFs can be submitted as-is. The laptop saves every PDF before attempting to print.
+Choose and format a photo on your phone, preview the printed page, then submit the PDF to your laptop. Existing PDFs open a page-by-page preview and can be submitted as-is. The laptop saves every PDF before attempting to print.
 
 ## Use the website
 
