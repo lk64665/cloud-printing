@@ -69,3 +69,24 @@
 .received-document a {
   color: var(--text-primary);
 }
+
+.printer-picker {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.printer-picker select {
+  width: 100%;
+  min-height: 2.5rem;
+  padding: 0.4rem;
+  border: 1px solid var(--card-border);
+  border-radius: 6px;
+  background: var(--card-bg);
+  color: var(--text-primary);
+  font: inherit;
+}
+
+.printer-picker button {
+  justify-self: start;
+}
