@@ -10,8 +10,7 @@
     "receiver": "node server/print-receiver.mjs"
   },
   "repository": {
-    "type": "git",
-    "url": "git+https://github.com/bemayr/printer.party.git"
+    "type": "git"
   },
   "author": "",
   "license": "ISC",
