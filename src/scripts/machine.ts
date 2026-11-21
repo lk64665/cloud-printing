@@ -18,6 +18,7 @@ export interface AppContext {
   sendProgress: number
   paper?: PaperSize
   sendStatus: string
+  receivedFile: File | null
   activeTab: 'room' | 'print'
 }
 
@@ -30,6 +31,7 @@ export type AppEvent =
   // From fileTransferActor
   | { type: 'SEND_PROGRESS'; percent: number }
   | { type: 'SEND_DONE'; message: string }
+  | { type: 'PDF_RECEIVED'; file: File }
   // User interactions — join flow
   | { type: 'START_SCAN' }
   | { type: 'START_CODE_ENTRY' }
@@ -114,6 +116,7 @@ export const printerPartyMachine = setup({
     fileToSend: null,
     sendProgress: 0,
     sendStatus: '',
+    receivedFile: null,
     activeTab: 'print' as const,
   }),
   on: {
@@ -132,6 +135,9 @@ export const printerPartyMachine = setup({
         input: ({ context }): RoomActorInput => ({ roomId: context.printerRoomId, receiving: true }),
       },
       on: {
+        PDF_RECEIVED: {
+          actions: assign({ receivedFile: ({ event }) => event.file }),
+        },
         DISCONNECT: {
           target: 'printer',
           reenter: true,
