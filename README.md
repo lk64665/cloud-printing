@@ -1,42 +1,42 @@
-# printer.party
+# Cloud Printing
 
-Easy remote printing. Send files from your phone to a nearby printer — no apps, no drivers, no cloud.
+Choose and format a photo on your phone, preview the printed page, then submit the PDF to your laptop. Existing PDFs can be submitted as-is. The laptop saves every PDF before attempting to print.
 
-**https://printer.party**
+## Windows laptop setup
 
-## How it works
+Use Node.js 22. In the project folder, install and build the app.
 
-1. Open **printer.party** on the computer connected to your printer. It generates a 4-character code and QR code.
-2. On your phone, open **printer.party** and scan the QR code (or enter the code manually) to connect.
-3. Pick a file (PDF or image) and tap **Print**. The file is sent directly to the other device, which opens the browser print dialog automatically.
-
-Files are transferred peer-to-peer using WebRTC. Nothing is uploaded to a server.
-
-## Tech stack
-
-- [Astro](https://astro.build/) — static site generation
-- [Trystero](https://github.com/dmotz/trystero) — peer-to-peer connections via Nostr relays
-- [qr-code-styling](https://github.com/niccolobertini/qr-code-styling) — QR code generation
-- [html5-qrcode](https://github.com/niccolobertini/html5-qrcode) — QR code scanning via camera
-- TypeScript
-
-## Development
-
-```sh
-npm install
-npm run dev
+```powershell
+npm.cmd ci
+npm.cmd run build
 ```
 
-## Build
+Set the URL of the **deployed HTTPS sender site** to let the laptop show a QR code that the phone can open. Use your own deployment of this repository, with the same version as the laptop app.
 
-```sh
-npm run build
-npm run preview  # preview the production build locally
+```powershell
+$env:PRINT_SENDER_URL = 'https://your-sender-site.example/'
+npm.cmd run receiver
 ```
 
-## Deployment
+Open the address shown in the terminal (by default, http://127.0.0.1:4321) **on the laptop**. Scan its QR with your phone's camera, or open the same HTTPS sender site on the phone and enter the four-character code. Keep the laptop's receiver and browser tab open. The phone and laptop pair through Trystero and exchange the file over WebRTC. The receiver listens on the laptop's loopback interface.
 
-The site is deployed to GitHub Pages via a GitHub Actions workflow on push to `main`.
+Choose a photo, set its paper size, orientation, margins and fit, and tap **Preview**. Tap **Submit** to send the prepared PDF. The phone displays the laptop's confirmation. Files go to **Downloads / Cloud Printing** by default. The receiver accepts PDFs up to 25 MB.
+
+### Optional physical printer
+
+Install [SumatraPDF](https://www.sumatrapdfreader.org/download-free-pdf-viewer) on the laptop. Before starting the receiver, set the exact printer name from Windows **Settings → Bluetooth & devices → Printers & scanners** and the path to your copy of SumatraPDF.
+
+```powershell
+$env:PRINT_PRINTER = 'Your physical printer name'
+$env:SUMATRA_PDF_PATH = 'C:\Program Files\SumatraPDF\SumatraPDF.exe'
+npm.cmd run receiver
+```
+
+Set `PRINT_SAVE_DIR` before starting the receiver to choose another save folder. Leave `PRINT_PRINTER` unset for save-only mode. Printer status comes from Windows and depends on the driver. A print confirmation means the job was submitted. The paper tray must have matching stock, and physical printer margins may clip edge-to-edge layouts. The PDF remains saved when a printer is unavailable or the print submission fails.
+
+## Development and hosting
+
+`npm run dev` starts the Astro development server for UI work. Run `npm run build` and `npm run receiver` to test receiving and saving. Deploy the build's `dist/` folder to an HTTPS static host for the phone. The GitHub Pages workflow builds the sender site on pushes to `main`. For a project URL with a path prefix, set the repository variable `PAGES_BASE_PATH` to that path (for example, `/cloud-printing`), or leave it unset for a root URL.
 
 ## License
 

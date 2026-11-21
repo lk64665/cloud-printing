@@ -6,102 +6,119 @@ import { printerPartyMachine } from './machine'
 import type { FileMetadata, AppEvent, RoomActorInput, FileTransferActorInput } from './machine'
 import { generateRoomId, isValidRoomId } from './utils'
 
-// Inspector starts silent; Ctrl+Shift+X opens the window.
 const inspector = createBrowserInspector({ autoStart: false })
+let sendFile: ActionSender<ArrayBuffer> | undefined
+let onReceipt: ((peerId: string, jobId: string, message: string) => void) | undefined
 
-// ── Module-level resources (managed by actors, not machine context) ───────────
-
-let sendFileFn: ActionSender<ArrayBuffer> | null = null
-
-function printReceivedFile(data: ArrayBuffer, metadata: FileMetadata) {
-  const blob = new Blob([data], { type: metadata.type })
-  const url = URL.createObjectURL(blob)
-
-  const iframe = document.createElement('iframe')
-  iframe.style.position = 'fixed'
-  iframe.style.left = '-9999px'
-  document.body.appendChild(iframe)
-
-  if (metadata.type.startsWith('image/')) {
-    const html = `<!DOCTYPE html>
-<html><head><style>
-  @page { margin: 0; }
-  body { margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-  img { max-width: 100%; max-height: 100vh; object-fit: contain; }
-</style></head><body><img src="${url}"></body></html>`
-    iframe.srcdoc = html
-  } else {
-    iframe.src = url
-  }
-
-  iframe.addEventListener('load', () => {
-    iframe.contentWindow?.print()
-    iframe.addEventListener('afterprint', () => {
-      iframe.remove()
-      URL.revokeObjectURL(url)
-    })
+async function saveReceivedFile(data: ArrayBuffer, metadata: FileMetadata) {
+  const params = new URLSearchParams({ name: metadata.name })
+  if (metadata.paper) params.set('paper', metadata.paper)
+  const response = await fetch(`./api/print?${params}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/pdf' },
+    body: data,
+    signal: AbortSignal.timeout(75_000),
   })
+  const result = await response.json()
+  if (typeof result.message !== 'string') throw new Error('Invalid response from the laptop receiver.')
+  return result.message
 }
-
-// ── Actor implementations ─────────────────────────────────────────────────────
 
 const roomActorImpl = fromCallback<AppEvent, RoomActorInput>(({ input, sendBack }) => {
   const room = joinRoom({ appId: 'printer-party', relayRedundancy: 10 }, input.roomId)
+  const [announceReceiver, getReceiver] = room.makeAction<string>('receiver')
+  const [askForReceiver, getReceiverRequest] = room.makeAction<string>('receiver-req')
+  const [postFile, getFile] = room.makeAction<ArrayBuffer>('file')
+  const [postReceipt, getReceipt] = room.makeAction<{ jobId: string; message: string }>('receipt')
 
-  room.onPeerJoin((peerId) => sendBack({ type: 'PEER_JOINED', peerId }))
+  const receiverReady = input.receiving
+    ? fetch('./api/receiver').then(response => response.ok).catch(() => false)
+    : Promise.resolve(false)
+  const offerReceiver = (peerId: string) => {
+    void receiverReady.then(ready => {
+      if (ready) return announceReceiver('', peerId)
+    }).catch(console.error)
+  }
+
+  room.onPeerJoin((peerId) => {
+    if (input.receiving) {
+      sendBack({ type: 'PEER_JOINED', peerId })
+      offerReceiver(peerId)
+    } else {
+      void askForReceiver('', peerId).catch(console.error)
+    }
+  })
   room.onPeerLeave((peerId) => sendBack({ type: 'PEER_LEFT', peerId }))
 
-  const [fn, getFile] = room.makeAction<ArrayBuffer>('file')
-  sendFileFn = fn
-
-  getFile((data, _peerId, metadata) => {
-    printReceivedFile(data, metadata as unknown as FileMetadata)
-  })
+  if (input.receiving) {
+    getReceiverRequest((_, peerId) => offerReceiver(peerId))
+    getFile(async (data, peerId, rawMetadata) => {
+      const metadata = rawMetadata as unknown as FileMetadata | undefined
+      if (!metadata || typeof metadata.jobId !== 'string' || typeof metadata.name !== 'string') return
+      let message: string
+      try {
+        message = await saveReceivedFile(data, metadata)
+      } catch (error) {
+        console.error('Receiving PDF:', error)
+        message = 'The laptop could not confirm saving the PDF. Check that its receiver is running.'
+      }
+      void postReceipt({ jobId: metadata.jobId, message }, peerId).catch(console.error)
+    })
+  } else {
+    sendFile = postFile
+    getReceiver((_, peerId) => sendBack({ type: 'PEER_JOINED', peerId }))
+    getReceipt(({ jobId, message }, peerId) => onReceipt?.(peerId, jobId, message))
+  }
 
   return () => {
     room.leave()
-    sendFileFn = null
+    if (!input.receiving) sendFile = undefined
   }
 })
 
-const fileTransferActorImpl = fromCallback<AppEvent, FileTransferActorInput>(
-  ({ input, sendBack }) => {
-    const abort = new AbortController()
-    const fn = sendFileFn
+const fileTransferActorImpl = fromCallback<AppEvent, FileTransferActorInput>(({ input, sendBack }) => {
+  const postFile = sendFile
+  const jobId = crypto.randomUUID()
+  let active = true
+  let timeout: ReturnType<typeof setTimeout> | undefined
 
-    if (!fn) {
-      sendBack({ type: 'SEND_DONE' })
-      return () => { }
-    }
-
-    input.file
-      .arrayBuffer()
-      .then((buffer) => {
-        const metadata: FileMetadata = {
-          name: input.file.name,
-          type: input.file.type,
-          size: input.file.size,
-        }
-        return fn(buffer, null, metadata as unknown as JsonValue, (percent) => {
-          if (!abort.signal.aborted) sendBack({ type: 'SEND_PROGRESS', percent })
-        })
-      })
-      .then(() => {
-        if (!abort.signal.aborted) sendBack({ type: 'SEND_DONE' })
-      })
-      .catch(() => {
-        if (!abort.signal.aborted) sendBack({ type: 'SEND_DONE' })
-      })
-
-    return () => abort.abort()
+  function finish(message: string) {
+    if (active) sendBack({ type: 'SEND_DONE', message })
   }
-)
 
-// ── Actor singleton ───────────────────────────────────────────────────────────
+  onReceipt = (peerId, receivedJobId, message) => {
+    if (peerId === input.peerId && receivedJobId === jobId) finish(message)
+  }
+  const metadata: FileMetadata = {
+    jobId,
+    name: input.file.name,
+    type: input.file.type,
+    size: input.file.size,
+    paper: input.paper,
+  }
 
-const hashRoomId = location.hash.slice(1)
-const initialRoomId = hashRoomId && isValidRoomId(hashRoomId) ? hashRoomId : generateRoomId()
-if (hashRoomId) history.replaceState(null, '', location.pathname + location.search)
+  if (postFile) {
+    timeout = setTimeout(() => finish('No confirmation from the laptop. Check its save folder before retrying.'), 120_000)
+    void input.file.arrayBuffer().then(async buffer => {
+      if (!active) return
+      await postFile(buffer, input.peerId, metadata as unknown as JsonValue, percent => {
+        if (active) sendBack({ type: 'SEND_PROGRESS', percent })
+      })
+    }).catch(() => finish('The transfer failed. Check the laptop before retrying.'))
+  } else {
+    finish('The laptop disconnected. Reconnect before submitting.')
+  }
+
+  return () => {
+    active = false
+    clearTimeout(timeout)
+    onReceipt = undefined
+  }
+})
+
+const hashRoomId = location.hash.slice(1).toLowerCase()
+const joinRoomId = isValidRoomId(hashRoomId) ? hashRoomId : ''
+if (joinRoomId) history.replaceState(null, '', location.pathname + location.search)
 
 export const actor = createActor(
   printerPartyMachine.provide({
@@ -111,19 +128,17 @@ export const actor = createActor(
       fileTransferActor: fileTransferActorImpl,
     },
   }),
-  {
-    input: { initialRoomId },
-    inspect: inspector.inspect,
-  }
+  { input: { initialRoomId: generateRoomId() }, inspect: inspector.inspect },
 )
 
 actor.start()
+if (joinRoomId) actor.send({ type: 'JOIN_ROOM', roomId: joinRoomId })
 
-document.addEventListener('keydown', (e) => {
-  if (e.ctrlKey && e.shiftKey && e.key === 'X') inspector.start()
+document.addEventListener('keydown', (event) => {
+  if (event.ctrlKey && event.shiftKey && event.key === 'X') inspector.start()
 })
 
 const mq = window.matchMedia('(max-width: 640px)')
-mq.addEventListener('change', (e) => {
-  if (e.matches) actor.send({ type: 'SWITCH_TAB', tab: 'print' })
+mq.addEventListener('change', (event) => {
+  if (event.matches) actor.send({ type: 'SWITCH_TAB', tab: 'print' })
 })
