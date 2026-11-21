@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'preact/hooks'
 import { defaultSettings, formatPhoto, paperSizes } from '../scripts/formatPhoto'
 import type { PaperSize, PhotoSettings } from '../scripts/formatPhoto'
+import PdfPreview from './PdfPreview'
 
 interface Props {
   isConnected: boolean
@@ -15,11 +16,14 @@ interface Props {
 export default function SendSection({ isConnected, isSending, sendProgress, fileName, sendStatus, onSendFile, onCancelSend }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [selected, setSelected] = useState<File | null>(null)
+  const [selection, setSelection] = useState(0)
   const [settings, setSettings] = useState(defaultSettings)
   const [prepared, setPrepared] = useState<{ file: File; url: string } | null>(null)
   const [preparing, setPreparing] = useState(false)
   const [error, setError] = useState('')
-  const isPhoto = selected !== null && !/\.pdf$/i.test(selected.name) && selected.type !== 'application/pdf'
+  const isPdf = selected !== null && (/\.pdf$/i.test(selected.name) || selected.type === 'application/pdf')
+  const isPhoto = selected !== null && !isPdf
+  const isOversizedPdf = isPdf && selected.size > 25 * 1024 * 1024
   const previewUrl = prepared?.url
 
   useEffect(() => {
@@ -48,13 +52,7 @@ export default function SendSection({ isConnected, isSending, sendProgress, file
 
   function submit() {
     if (isPhoto && prepared) onSendFile(prepared.file, settings.paper)
-    if (!isPhoto && selected) {
-      if (selected.size > 25 * 1024 * 1024) {
-        setError('Choose a PDF no larger than 25 MB.')
-        return
-      }
-      onSendFile(selected)
-    }
+    if (isPdf && !isOversizedPdf) onSendFile(selected)
   }
 
   return (
@@ -72,6 +70,7 @@ export default function SendSection({ isConnected, isSending, sendProgress, file
           const file = event.currentTarget.files?.[0]
           if (file) {
             setSelected(file)
+            setSelection(value => value + 1)
             setPrepared(null)
             setError('')
           }
@@ -80,6 +79,8 @@ export default function SendSection({ isConnected, isSending, sendProgress, file
       />
 
       {selected && <p class="selected-file">{selected.name}</p>}
+      {isPdf && !isOversizedPdf && <PdfPreview key={selection} file={selected} />}
+      {isOversizedPdf && <p role="alert">Choose a PDF no larger than 25 MB.</p>}
       {isPhoto && (
         <fieldset class="photo-settings" disabled={preparing || isSending}>
           <legend>Page settings</legend>
@@ -115,7 +116,7 @@ export default function SendSection({ isConnected, isSending, sendProgress, file
       {prepared && <img class="photo-preview" src={prepared.url} alt="Preview of the formatted print page" />}
 
       {selected && !isSending && (
-        <button disabled={!isConnected || (isPhoto && !prepared)} onClick={submit}>Submit</button>
+        <button disabled={!isConnected || isOversizedPdf || (isPhoto && !prepared)} onClick={submit}>Submit</button>
       )}
       {isSending && (
         <div id="send-progress">
