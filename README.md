@@ -2,7 +2,11 @@
 
 Choose and format a photo on your phone, preview the printed page, then submit the PDF to your laptop. Existing PDFs can be submitted as-is. The laptop saves every PDF before attempting to print.
 
-## Windows laptop setup
+## Use the website
+
+Open the [hosted website](https://cloud-printing-nine.vercel.app/) on the laptop, keep the tab open, and scan the QR in **Share Printer** with your phone. Choose and format your photo, tap **Preview**, then tap **Submit**. The laptop browser starts a PDF download using its download settings. **Download again** is available if automatic downloads are blocked. Use **Open PDF to print** and the PDF viewer’s Print button for a connected printer.
+
+## Optional Windows receiver for unattended printing
 
 Use Node.js 22. In the project folder, install and build the app.
 
@@ -19,7 +23,7 @@ npm.cmd run receiver
 
 Open the address shown in the terminal (by default, http://127.0.0.1:4321) **on the laptop**. Scan its QR with your phone's camera, or open the same HTTPS sender site on the phone and enter the four-character code. Keep the laptop's receiver and browser tab open. The phone and laptop pair through Trystero and exchange the file over WebRTC. The receiver listens on the laptop's loopback interface.
 
-If you use a different deployment, set `$env:PRINT_SENDER_URL = 'https://your-sender-site.example/'` before starting the receiver. Use the same version of the app on both devices. The hosted site and Astro development server are for the phone or for UI work. The laptop’s QR code appears on the receiver URL.
+If you use a different deployment, set `$env:PRINT_SENDER_URL = 'https://your-sender-site.example/'` before starting the receiver. Use the same version of the app on both devices. For unattended printing, use the local receiver URL on the laptop.
 
 Choose a photo, set its paper size, orientation, margins and fit, and tap **Preview**. Tap **Submit** to send the prepared PDF. The phone displays the laptop's confirmation. Files go to **Downloads / Cloud Printing** by default. The receiver accepts PDFs up to 25 MB.
 

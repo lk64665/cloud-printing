@@ -8,7 +8,29 @@ import { generateRoomId, isValidRoomId } from './utils'
 
 const inspector = createBrowserInspector({ autoStart: false })
 let sendFile: ActionSender<ArrayBuffer> | undefined
+export const receiverConfig: Promise<{ senderUrl: string } | null> =
+  ['127.0.0.1', 'localhost'].includes(location.hostname)
+    ? fetch('./api/receiver')
+      .then(async response => {
+        if (!response.ok) return null
+        const config = await response.json()
+        return typeof config.senderUrl === 'string' ? config : null
+      })
+      .catch(() => null)
+    : Promise.resolve(null)
+
 let onReceipt: ((peerId: string, jobId: string, message: string) => void) | undefined
+
+function downloadPdf(file: File) {
+  const url = URL.createObjectURL(file)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = file.name
+  document.body.append(link)
+  link.click()
+  link.remove()
+  setTimeout(() => URL.revokeObjectURL(url), 60_000)
+}
 
 async function saveReceivedFile(data: ArrayBuffer, metadata: FileMetadata) {
   const params = new URLSearchParams({ name: metadata.name })
@@ -31,13 +53,8 @@ const roomActorImpl = fromCallback<AppEvent, RoomActorInput>(({ input, sendBack 
   const [postFile, getFile] = room.makeAction<ArrayBuffer>('file')
   const [postReceipt, getReceipt] = room.makeAction<{ jobId: string; message: string }>('receipt')
 
-  const receiverReady = input.receiving
-    ? fetch('./api/receiver').then(response => response.ok).catch(() => false)
-    : Promise.resolve(false)
   const offerReceiver = (peerId: string) => {
-    void receiverReady.then(ready => {
-      if (ready) return announceReceiver('', peerId)
-    }).catch(console.error)
+    void announceReceiver('', peerId).catch(console.error)
   }
 
   room.onPeerJoin((peerId) => {
@@ -57,10 +74,21 @@ const roomActorImpl = fromCallback<AppEvent, RoomActorInput>(({ input, sendBack 
       if (!metadata || typeof metadata.jobId !== 'string' || typeof metadata.name !== 'string') return
       let message: string
       try {
-        message = await saveReceivedFile(data, metadata)
+        if (await receiverConfig) {
+          message = await saveReceivedFile(data, metadata)
+        } else if (data.byteLength > 25 * 1024 * 1024 ||
+          new TextDecoder().decode(data.slice(0, 5)) !== '%PDF-') {
+          message = 'The laptop rejected the file. Send a PDF up to 25 MB.'
+        } else {
+          const stem = metadata.name.replace(/\.pdf$/i, '').replace(/[<>:"/\\|?*\u0000-\u001f]/g, '_').trim().slice(0, 120)
+          const file = new File([data], (stem || 'document') + '.pdf', { type: 'application/pdf' })
+          sendBack({ type: 'PDF_RECEIVED', file })
+          downloadPdf(file)
+          message = 'Received by the laptop. Check its browser downloads.'
+        }
       } catch (error) {
         console.error('Receiving PDF:', error)
-        message = 'The laptop could not confirm saving the PDF. Check that its receiver is running.'
+        message = 'The laptop could not confirm saving the PDF. Check the site open on the laptop.'
       }
       void postReceipt({ jobId: metadata.jobId, message }, peerId).catch(console.error)
     })

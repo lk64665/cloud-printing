@@ -58,3 +58,14 @@
 .peer-status.connected .peer-count {
   color: var(--text-primary);
 }
+
+.received-document {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  overflow-wrap: anywhere;
+}
+
+.received-document a {
+  color: var(--text-primary);
+}
