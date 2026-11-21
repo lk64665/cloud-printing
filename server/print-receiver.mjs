@@ -15,7 +15,7 @@ const sumatra = process.env.SUMATRA_PDF_PATH || 'SumatraPDF.exe'
 const host = '127.0.0.1'
 const port = Number(process.env.PRINT_PORT || 4321)
 const origin = `http://${host}:${port}`
-const senderUrl = process.env.PRINT_SENDER_URL?.trim() || ''
+const senderUrl = process.env.PRINT_SENDER_URL?.trim() || 'https://cloud-printing-nine.vercel.app/'
 const maximumSize = 25 * 1024 * 1024
 const paperSizes = new Map([['A4', 'A4'], ['Letter', 'letter'], ['A5', 'A5'], ['Legal', 'legal']])
 const contentTypes = {
@@ -27,11 +27,9 @@ const contentTypes = {
   '.webmanifest': 'application/manifest+json',
 }
 
-if (senderUrl) {
-  const url = new URL(senderUrl)
-  if (url.protocol !== 'https:' || url.username || url.password) {
-    throw new Error('PRINT_SENDER_URL must be a public HTTPS URL.')
-  }
+const sender = new URL(senderUrl)
+if (sender.protocol !== 'https:' || sender.username || sender.password) {
+  throw new Error('PRINT_SENDER_URL must be a public HTTPS URL.')
 }
 try {
   await stat(resolve(site, 'index.html'))
@@ -160,5 +158,5 @@ const server = createServer(async (request, response) => {
 
 server.listen(port, host, () => {
   console.log(`Open ${origin} on the laptop. Files are saved to ${saveFolder}.`)
-  if (!senderUrl) console.log('Set PRINT_SENDER_URL to the deployed HTTPS site for phone QR links.')
+  console.log(`Phone sender site: ${senderUrl}`)
 })

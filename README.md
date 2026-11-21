@@ -11,14 +11,15 @@ npm.cmd ci
 npm.cmd run build
 ```
 
-Set the URL of the **deployed HTTPS sender site** to let the laptop show a QR code that the phone can open. Use your own deployment of this repository, with the same version as the laptop app.
+Start the receiver. The laptop QR code points to the repository’s [deployed sender site](https://cloud-printing-nine.vercel.app/) by default.
 
 ```powershell
-$env:PRINT_SENDER_URL = 'https://your-sender-site.example/'
 npm.cmd run receiver
 ```
 
 Open the address shown in the terminal (by default, http://127.0.0.1:4321) **on the laptop**. Scan its QR with your phone's camera, or open the same HTTPS sender site on the phone and enter the four-character code. Keep the laptop's receiver and browser tab open. The phone and laptop pair through Trystero and exchange the file over WebRTC. The receiver listens on the laptop's loopback interface.
+
+If you use a different deployment, set `$env:PRINT_SENDER_URL = 'https://your-sender-site.example/'` before starting the receiver. Use the same version of the app on both devices. The hosted site and Astro development server are for the phone or for UI work. The laptop’s QR code appears on the receiver URL.
 
 Choose a photo, set its paper size, orientation, margins and fit, and tap **Preview**. Tap **Submit** to send the prepared PDF. The phone displays the laptop's confirmation. Files go to **Downloads / Cloud Printing** by default. The receiver accepts PDFs up to 25 MB.
 

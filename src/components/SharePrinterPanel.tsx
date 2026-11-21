@@ -21,11 +21,9 @@ export default function SharePrinterPanel() {
       })
       .then(({ senderUrl }) => {
         setSenderUrl(senderUrl)
-        setReceiverHint(senderUrl
-          ? 'Scan the QR code with your phone or enter the code on the sender site.'
-          : 'Open the sender site on your phone and enter the code below.')
+        setReceiverHint('Scan the QR code with your phone or enter the code on the sender site.')
       })
-      .catch(() => setReceiverHint('Open this app through the Windows receiver to accept files.'))
+      .catch(() => setReceiverHint('To show the QR code, run npm run receiver on the laptop and open the address shown in the terminal.'))
   }, [])
 
   const roomUrl = senderUrl ? new URL(senderUrl) : null
