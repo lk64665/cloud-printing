@@ -4,7 +4,7 @@ Select a PDF or supported image on your phone. Set the paper size, orientation, 
 
 ## Use the website
 
-Open the [hosted website](https://cloud-printing-nine.vercel.app/) on the laptop, keep the tab open, and scan the QR in **Share Printer** with your phone. Choose an image or PDF, apply the print settings, tap **Preview**, and then tap **Submit**. The laptop browser starts a PDF download using its download settings. **Download again** is available if automatic downloads are blocked. Use **Open PDF to print** and the PDF viewer’s Print button for a connected printer.
+Open the [hosted website](https://cloud-printing-nine.vercel.app/) on the laptop, keep the tab open, and scan the QR in **Share Printer** with your phone. Choose an image or PDF, apply the print settings, tap **Preview**, and then tap **Submit**. The laptop browser starts a PDF download using its download settings. **Download again** is available if automatic downloads are blocked. Use **Open PDF to print** and choose the printer in the browser’s print dialog.
 
 ## Optional Windows receiver for unattended printing
 
@@ -29,15 +29,14 @@ Choose a file, set the layout and tap **Preview** to review the pages before sub
 
 ### Optional physical printer
 
-Install [SumatraPDF](https://www.sumatrapdfreader.org/download-free-pdf-viewer) on the laptop. Before starting the receiver, set the exact printer name from Windows **Settings → Bluetooth & devices → Printers & scanners** and the path to your copy of SumatraPDF.
+Install [SumatraPDF](https://www.sumatrapdfreader.org/download-free-pdf-viewer) on the laptop. Before starting the receiver, set the path to your copy of SumatraPDF.
 
 ```powershell
-$env:PRINT_PRINTER = 'Your physical printer name'
 $env:SUMATRA_PDF_PATH = 'C:\Program Files\SumatraPDF\SumatraPDF.exe'
 npm.cmd run receiver
 ```
 
-Set `PRINT_SAVE_DIR` before starting the receiver to choose another save folder. Leave `PRINT_PRINTER` unset for save-only mode. Single-sided and duplex choices travel as PDF print preferences. SumatraPDF uses these preferences on supported printers. In browser-only mode, verify the sides setting in the print dialog. Printer status comes from Windows and depends on the driver. A print confirmation means the job was submitted. The paper tray must have matching stock, and physical printer margins may clip edge-to-edge layouts. The PDF remains saved when a printer is unavailable or the print submission fails.
+On the laptop receiver page, choose the output device from **Share Printer → Printer**. Use **Refresh printers** after adding or reconnecting a printer, or choose **Save PDF only**. The selection applies to new jobs and lasts until the receiver restarts. Set `PRINT_PRINTER` to a Windows printer name if you want a startup selection. Set `PRINT_SAVE_DIR` to choose another save folder. Single-sided and duplex choices travel as PDF print preferences. SumatraPDF uses these preferences on supported printers. In browser-only mode, verify the sides setting in the print dialog. Printer status comes from Windows and depends on the driver. A print confirmation means the job was submitted. The paper tray must have matching stock, and physical printer margins may clip edge-to-edge layouts. The PDF remains saved when a printer is unavailable or the print submission fails.
 
 ## Development and hosting
 
