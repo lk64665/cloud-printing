@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'preact/hooks'
 import type { PDFDocumentLoadingTask, PDFDocumentProxy, RenderTask } from 'pdfjs-dist'
-import workerUrl from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url'
+import { openPdf } from '../scripts/printLayout'
 
 export default function PdfPreview({ file }: { file: File }) {
   const pageContainer = useRef<HTMLDivElement>(null)
@@ -20,12 +20,12 @@ export default function PdfPreview({ file }: { file: File }) {
     let cancelled = false
     let loading: PDFDocumentLoadingTask | undefined
 
-    async function openPdf() {
-      const bytes = await file.arrayBuffer()
-      const { getDocument, GlobalWorkerOptions } = await import('pdfjs-dist/legacy/build/pdf.mjs')
-      if (cancelled) return
-      GlobalWorkerOptions.workerSrc = workerUrl
-      loading = getDocument({ data: bytes })
+    async function loadPreview() {
+      loading = await openPdf(file)
+      if (cancelled) {
+        await loading.destroy()
+        return
+      }
       loading.onPassword = () => {
         if (!cancelled) {
           setStatus('')
@@ -37,7 +37,7 @@ export default function PdfPreview({ file }: { file: File }) {
       if (!cancelled) setPdf(document)
     }
 
-    void openPdf().catch(() => {
+    void loadPreview().catch(() => {
       if (cancelled || loading?.destroyed) return
       setStatus('')
       setError('Could not preview this PDF.')
