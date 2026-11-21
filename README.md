@@ -1,10 +1,10 @@
 # Cloud Printing
 
-Choose a supported image on your phone to preview and adjust its printed layout, then submit the PDF to your laptop. Existing PDFs open a page-by-page preview and can be submitted as-is. The laptop saves every PDF before attempting to print.
+Select a PDF or supported image on your phone. Set the paper size, orientation, margins, and print sides, then tap **Preview**. PDFs also support page ranges and 1, 2, or 4 pages per sheet. A photo is a single page and has a fit or crop option. **Submit** sends the exact previewed PDF to the laptop. Changing a setting requires a new preview.
 
 ## Use the website
 
-Open the [hosted website](https://cloud-printing-nine.vercel.app/) on the laptop, keep the tab open, and scan the QR in **Share Printer** with your phone. Choose an image or PDF. Its preview opens automatically. Adjust the image layout if needed, then tap **Submit**. The laptop browser starts a PDF download using its download settings. **Download again** is available if automatic downloads are blocked. Use **Open PDF to print** and the PDF viewer’s Print button for a connected printer.
+Open the [hosted website](https://cloud-printing-nine.vercel.app/) on the laptop, keep the tab open, and scan the QR in **Share Printer** with your phone. Choose an image or PDF, apply the print settings, tap **Preview**, and then tap **Submit**. The laptop browser starts a PDF download using its download settings. **Download again** is available if automatic downloads are blocked. Use **Open PDF to print** and the PDF viewer’s Print button for a connected printer.
 
 ## Optional Windows receiver for unattended printing
 
@@ -25,7 +25,7 @@ Open the address shown in the terminal (by default, http://127.0.0.1:4321) **on 
 
 If you use a different deployment, set `$env:PRINT_SENDER_URL = 'https://your-sender-site.example/'` before starting the receiver. Use the same version of the app on both devices. For unattended printing, use the local receiver URL on the laptop.
 
-Choose a photo to see its page preview. Set its paper size, orientation, margins and fit to update the preview. Tap **Submit** to send the prepared PDF. The phone displays the laptop's confirmation. Files go to **Downloads / Cloud Printing** by default. The receiver accepts PDFs up to 25 MB.
+Choose a file, set the layout and tap **Preview** to review the pages before submitting. Tap **Submit** to send the prepared PDF. The phone displays the laptop's confirmation. Files go to **Downloads / Cloud Printing** by default. The receiver accepts PDFs up to 25 MB.
 
 ### Optional physical printer
 
@@ -37,7 +37,7 @@ $env:SUMATRA_PDF_PATH = 'C:\Program Files\SumatraPDF\SumatraPDF.exe'
 npm.cmd run receiver
 ```
 
-Set `PRINT_SAVE_DIR` before starting the receiver to choose another save folder. Leave `PRINT_PRINTER` unset for save-only mode. Printer status comes from Windows and depends on the driver. A print confirmation means the job was submitted. The paper tray must have matching stock, and physical printer margins may clip edge-to-edge layouts. The PDF remains saved when a printer is unavailable or the print submission fails.
+Set `PRINT_SAVE_DIR` before starting the receiver to choose another save folder. Leave `PRINT_PRINTER` unset for save-only mode. Single-sided and duplex choices travel as PDF print preferences. SumatraPDF uses these preferences on supported printers. In browser-only mode, verify the sides setting in the print dialog. Printer status comes from Windows and depends on the driver. A print confirmation means the job was submitted. The paper tray must have matching stock, and physical printer margins may clip edge-to-edge layouts. The PDF remains saved when a printer is unavailable or the print submission fails.
 
 ## Development and hosting
 
