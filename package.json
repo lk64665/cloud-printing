@@ -1,5 +1,5 @@
 {
-  "name": "printer.party",
+  "name": "printer kiosk",
   "version": "0.0.1",
   "description": "",
   "scripts": {
@@ -16,9 +16,9 @@
   "license": "ISC",
   "type": "module",
   "bugs": {
-    "url": "https://github.com/bemayr/printer.party/issues"
+    "url": "https://github.com/bemayr/printer kiosk/issues"
   },
-  "homepage": "https://github.com/bemayr/printer.party#readme",
+  "homepage": "https://github.com/bemayr/printer kiosk#readme",
   "private": "true",
   "dependencies": {
     "@astrojs/preact": "^4.1.3",

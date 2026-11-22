@@ -1,6 +1,6 @@
 {
-  "name": "printer.party",
-  "short_name": "printer.party",
+  "name": "printer kiosk",
+  "short_name": "printer kiosk",
   "description": "remote printing made painless",
   "start_url": "./",
   "display": "standalone",

@@ -12,7 +12,7 @@ No test runner or linter is configured.
 
 ## Architecture
 
-**printer.party** is a peer-to-peer file sharing app that lets you send files (PDFs, images) to connected peers and auto-trigger browser print dialogs on receipt.
+**printer kiosk** is a peer-to-peer file sharing app that lets you send files (PDFs, images) to connected peers and auto-trigger browser print dialogs on receipt.
 
 **Stack:** Astro 5 (static SSG) + TypeScript (strict) + Trystero (P2P via Nostr relays) + QR code libraries
 
