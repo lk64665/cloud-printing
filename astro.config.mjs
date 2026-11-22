@@ -3,7 +3,6 @@ import { defineConfig } from 'astro/config'
 import preact from '@astrojs/preact'
 
 export default defineConfig({
-  site: 'https://printer kiosk',
   base: process.env.PAGES_BASE_PATH || '/',
   integrations: [preact()],
   vite: {
