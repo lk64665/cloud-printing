@@ -53,3 +53,10 @@ On the laptop receiver page, choose the output device from **Share Printer → P
 - If a printer is missing, confirm it is installed in Windows and refresh the printer list.
 - If printing fails, check the Downloads/Cloud Printing folder for the saved PDF before retrying to avoid duplicate prints.
 - For upload failures, confirm the PDF is within the 25 MB limit.
+## Before Printing
+
+- Keep the Windows print receiver running.
+- Make sure both devices have internet access.
+- Preview your document before submitting it.
+- Verify the selected printer before printing.
+- If printing fails, check the saved PDF in the Downloads/Cloud Printing folder before retrying.
