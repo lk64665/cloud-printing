@@ -45,3 +45,11 @@ On the laptop receiver page, choose the output device from **Share Printer → P
 ## License
 
 [ISC](LICENSE)
+
+## Troubleshooting
+
+- If the receiver fails to start, check `node --version` (Node 22) and run `npm.cmd ci` from the project directory before rebuilding.
+- If pairing fails, keep the receiver running, reopen `http://127.0.0.1:4321` on the Windows computer, and scan the current QR code again. Check internet connectivity on both devices.
+- If a printer is missing, confirm it is installed in Windows and refresh the printer list.
+- If printing fails, check the Downloads/Cloud Printing folder for the saved PDF before retrying to avoid duplicate prints.
+- For upload failures, confirm the PDF is within the 25 MB limit.
