@@ -61,3 +61,4 @@ On the laptop receiver page, choose the output device from **Share Printer → P
 - Verify the selected printer before printing.
 - If printing fails, check the saved PDF in the Downloads/Cloud Printing folder before retrying.
 - improve printing checklist
+- improve printing history
