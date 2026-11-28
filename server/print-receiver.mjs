@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url'
 import { promisify } from 'node:util'
 
 const run = promisify(execFile)
-const site = fileURLToPath(new URL('../dist', import.meta.url))
+const site = resolve(fileURLToPath(new URL('../dist', import.meta.url)))
 const saveFolder = resolve(process.env.PRINT_SAVE_DIR || resolve(homedir(), 'Downloads', 'Cloud Printing'))
 let selectedPrinter = process.env.PRINT_PRINTER?.trim() || ''
 const sumatra = process.env.SUMATRA_PDF_PATH || 'SumatraPDF.exe'
