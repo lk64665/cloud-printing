@@ -14,6 +14,9 @@ let selectedPrinter = process.env.PRINT_PRINTER?.trim() || ''
 const sumatra = process.env.SUMATRA_PDF_PATH || 'SumatraPDF.exe'
 const host = '127.0.0.1'
 const port = Number(process.env.PRINT_PORT || 4321)
+if (!Number.isInteger(port) || port < 1 || port > 65535) {
+  throw new Error('PRINT_PORT must be an integer between 1 and 65535.')
+}
 const origin = `http://${host}:${port}`
 const senderUrl = process.env.PRINT_SENDER_URL?.trim() || 'https://cloud-printing-nine.vercel.app/'
 const maximumSize = 25 * 1024 * 1024
