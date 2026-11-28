@@ -1,43 +1,43 @@
-# CLAUDE.md
+# Contributor guide
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+## Commands
 
-## Build & Development Commands
+Use Node.js 22 and install dependencies with `npm ci`.
 
-- `npm run dev` — Start Astro dev server with hot reload
-- `npm run build` — Production build to `dist/`
-- `npm run preview` — Preview production build locally
+- `npm run dev`: Astro development server.
+- `npm run build`: static production build in `dist/`.
+- `npm run preview`: preview the static build.
+- `npm run receiver`: local receiver; build the frontend first.
 
-No test runner or linter is configured.
+No test runner or linter script is currently configured. Run the production build for changes, then verify the affected flow. Receiver printing requires Windows and optional SumatraPDF; see README.md for setup.
 
 ## Architecture
 
-**printer kiosk** is a peer-to-peer file sharing app that lets you send files (PDFs, images) to connected peers and auto-trigger browser print dialogs on receipt.
+Cloud Printing uses Astro, Preact components, TypeScript, XState, and Trystero's Nostr relay strategy for WebRTC pairing. The static website runs on an HTTPS host. The optional receiver serves the built website and local API on the laptop's loopback interface.
 
-**Stack:** Astro 5 (static SSG) + TypeScript (strict) + Trystero (P2P via Nostr relays) + QR code libraries
+Key files:
 
-### Key Files
+- `src/pages/index.astro`: application entry and page structure.
+- `src/components/SendSection.tsx`: file selection, print settings, preview preparation, and submission.
+- `src/components/PdfPreview.tsx`: PDF.js preview and page navigation.
+- `src/scripts/formatPhoto.ts`: format images into a single-page PDF.
+- `src/scripts/printLayout.ts`: PDF loading, page ranges, multiple pages per sheet, and PDF print preferences.
+- `src/scripts/machine.ts`: application state machine and event types.
+- `src/scripts/actor.ts`: room actors, transfers, receipts, and receiver integration.
+- `src/scripts/utils.ts`: four-character room-code generation and validation.
+- `server/print-receiver.mjs`: local PDF saving, Windows printer discovery, and optional unattended printing.
+- `public/sw.js`: service worker caching.
 
-- `src/pages/index.astro` — Single-page app: HTML structure, CSS (responsive with 640px breakpoint), and script import. Desktop shows dual-panel layout; mobile uses tab navigation (Room/Print).
-- `src/scripts/printer-party.ts` — All application logic: room management, P2P connections, file transfer, QR code generation/scanning, and auto-print via hidden iframe.
+## File flow
 
-### How It Works
+1. The laptop creates a four-character room code and displays a QR link.
+2. The sender joins using that link, QR scan, or a room code.
+3. The sender selects a PDF or image, chooses print settings, and prepares a PDF preview. PDFs support page ranges and 1, 2, or 4 pages per sheet.
+4. Submit sends the prepared PDF with a job ID and metadata over WebRTC.
+5. In browser mode, the laptop downloads the PDF and provides an option to open it for manual printing.
+6. With the local receiver, the laptop posts the PDF to its local API for saving and optional SumatraPDF printing.
+7. A receipt identifies the job and reports the laptop's result to the sender.
 
-1. On load, an 8-char alphanumeric room ID is generated and stored in `location.hash`
-2. A QR code is rendered linking to the app URL with that hash
-3. Peers join the same room via QR scan (mobile camera) or URL sharing
-4. Trystero (Nostr relay strategy, appId: `'printer-party'`) handles WebRTC signaling and data channels
-5. Files are sent as `ArrayBuffer` with metadata (`name`, `type`, `size`) via `room.makeAction<ArrayBuffer>('file')`
-6. On receipt, files auto-print using a hidden iframe: PDFs use native viewer, images are wrapped in HTML with print-friendly CSS
+Changing print settings requires a new preview. Prepared PDFs are limited to 25 MB. Browser-only receiving validates the size and PDF signature; the local receiver applies its own checks. Do not assume browser receipt means physical printing succeeded.
 
-### P2P Data Flow
-
-```
-Printer (creates room) <──Trystero/Nostr──> Sender (joins via QR/URL)
-   └─ receives file                              └─ sends file + metadata
-   └─ auto-prints via hidden iframe
-```
-
-### Accepted File Types
-
-PDF (`.pdf`) and images (`image/*`), validated at the file input level.
+Keep the local receiver bound to loopback. Use a small sample PDF without personal information when verifying transfer and printing.
