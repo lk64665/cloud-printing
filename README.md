@@ -42,6 +42,13 @@ On the laptop receiver page, choose the output device from **Share Printer → P
 
 `npm run dev` starts the Astro development server for UI work. Run `npm run build` and `npm run receiver` to test receiving and saving. Deploy the build's `dist/` folder to an HTTPS static host for the phone. The GitHub Pages workflow builds the sender site on pushes to `main`. For a project URL with a path prefix, set the repository variable `PAGES_BASE_PATH` to that path (for example, `/cloud-printing`), or leave it unset for a root URL.
 
+## Contributing
+
+- Use Node.js 22 and run `npm ci` to install the locked dependencies.
+- Create a feature branch and use `npm run dev` to test interface changes locally.
+- Run `npm run build` before opening a pull request. For receiver changes, also run `npm run receiver` and verify that a sample PDF is saved correctly.
+- Describe the changes and manual verification steps in your pull request. Use sample documents without personal information when testing.
+
 ## License
 
 [ISC](LICENSE)
