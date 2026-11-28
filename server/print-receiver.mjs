@@ -77,7 +77,7 @@ async function listPrinters() {
   if (!stdout.trim()) return []
 
   return [JSON.parse(stdout)].flat()
-    .filter(printer => printer.Name &&
+    .filter(printer => printer?.Name &&
       !/^(FILE:|PORTPROMPT:|NUL:|SHRFAX:)/i.test(printer.PortName ?? '') &&
       !/^(Microsoft Print to PDF|Microsoft XPS Document Writer(?: v4)?|Fax|OneNote(?: for Windows 10| \(Desktop\))?|Send to OneNote.*)$/i.test(printer.Name))
     .map(printer => ({
