@@ -75,6 +75,23 @@ Open the local URL printed by Astro. For end-to-end receiver testing, stop the d
 - If a printer is missing, confirm it is installed in Windows and refresh the printer list.
 - If printing fails, check the Downloads/Cloud Printing folder for the saved PDF before retrying to avoid duplicate prints.
 - For upload failures, confirm the PDF is within the 25 MB limit.
+
+### Printer connectivity and Windows print queue
+
+- For USB printers, check the cable and try another USB port. For network printers, verify the printer is connected to the laptop's network and that Windows can reach it. Check the printer display for paper jams, empty trays, or other errors.
+- In PowerShell, run `Get-Printer | Select-Object Name, PrinterStatus, PortName` to inspect the installed devices and verify that the selected printer name matches the Windows queue.
+- Open **Settings → Bluetooth & devices → Printers & scanners**, select the printer, and print a Windows test page. If the test page fails, resolve the Windows driver or connectivity issue before troubleshooting the receiver.
+- Open the printer's queue and check for paused, offline, or stuck jobs. Cancel only jobs you recognize and no longer need; check whether a job has already printed before submitting it again.
+- Check the Windows Print Spooler with `Get-Service -Name Spooler`. If the service is stopped, start it from an elevated PowerShell with `Start-Service -Name Spooler`. If it is unresponsive, an administrator can run `Restart-Service -Name Spooler` after checking with other users, since restarting it can interrupt active printing.
+- If saving works but unattended printing fails, verify that `SUMATRA_PDF_PATH` points to an existing executable and test printing the saved PDF manually with SumatraPDF using the same printer.
+
+### Receiver transfer diagnostics
+
+- Try a small, non-sensitive sample PDF with **Save PDF only** selected to isolate file transfer and saving from physical printer problems.
+- On the laptop, check the local receiver endpoint with `Test-NetConnection -ComputerName 127.0.0.1 -Port 4321` (substitute the actual configured port if different). This only tests local TCP connectivity, not WebRTC pairing.
+- If pairing succeeds but submission stalls, inspect the laptop browser's developer console and receiver terminal for errors. Check whether the phone reports confirmation and whether a PDF appears in the configured save directory. If saving fails, check available disk space and write permissions for that directory.
+- If WebRTC connections fail on a restricted campus or guest network, try another trusted network and check whether network policy blocks peer-to-peer connections or relay traffic. Keep the receiver bound to loopback; do not expose its local port or disable the firewall to troubleshoot phone pairing.
+
 ## Before Printing
 
 - Keep the Windows print receiver running.
