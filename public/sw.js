@@ -37,6 +37,6 @@ self.addEventListener('fetch', (event) => {
         }
         return response
       })
-      .catch(() => caches.match(request))
+      .catch(() => caches.open(CACHE_NAME).then((cache) => cache.match(request)))
   )
 })
