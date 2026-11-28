@@ -15,7 +15,7 @@ export function extractRoomId(scannedText: string): string | null {
   try {
     const url = new URL(text)
     const hash = url.hash.slice(1)
-    if (hash) return hash
+    if (isValidRoomId(hash)) return hash
   } catch {
     // Not a URL — treat as raw room ID
   }
