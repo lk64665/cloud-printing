@@ -44,6 +44,21 @@ On the laptop receiver page, choose the output device from **Share Printer → P
 
 ## Contributing
 
+### Local setup
+
+Clone the repository and start the development server from the project directory:
+
+```powershell
+git clone https://github.com/lk64665/cloud-printing.git
+cd cloud-printing
+npm.cmd ci
+npm.cmd run dev
+```
+
+Open the local URL printed by Astro. For end-to-end receiver testing, stop the development server and follow the Windows receiver instructions above.
+
+### Contribution checklist
+
 - Use Node.js 22 and run `npm ci` to install the locked dependencies.
 - Create a feature branch and use `npm run dev` to test interface changes locally.
 - Run `npm run build` before opening a pull request. For receiver changes, also run `npm run receiver` and verify that a sample PDF is saved correctly.
