@@ -143,7 +143,14 @@ const server = createServer(async (request, response) => {
     reply(response, 403, { message: 'Use the receiver URL printed in the terminal.' })
     return
   }
-  const url = new URL(request.url, origin)
+  let url
+  try {
+    url = new URL(request.url, origin)
+    decodeURIComponent(url.pathname)
+  } catch {
+    reply(response, 400, { message: 'Invalid request URL.' })
+    return
+  }
   try {
     if (url.pathname === '/api/receiver' && request.method === 'GET') {
       reply(response, 200, { senderUrl })
